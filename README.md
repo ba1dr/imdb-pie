@@ -31,6 +31,13 @@ imdb = Imdb(cache=True, cache_dir='/tmp/imdbpie-cache-here')
 ```python
 imdb.find_by_title("The Dark Knight") => [{'title' : "The Dark Knight", 'year' :  "2008", 'imdb_id' : "tt0468569"}, {'title' : "Batman Unmasked", ...}]
 ```
+
+### Search for a movie by title, reduce by year
+```python
+imdb.find_by_title("The Dark Knight", 2013) => [{'imdb_id': u'tt2166834', 'title': u'Batman: The Dark Knight Returns, Part 2',
+  'year': u'2013'}, {'imdb_id': u'tt2257218', 'title': u'The Dark Knight Retires', 'year': u'2013'}, ...]
+```
+
 ### Find a movie by its imdb_id
 ```python
 movie = imdb.find_movie_by_id("tt0468569")
@@ -38,6 +45,13 @@ movie = imdb.find_movie_by_id("tt0468569")
 movie.title => "The Dark Knight"
 movie.rating => 8.1
 movie.certification => "PG-13"
+```
+
+### Find a person by its imdb_id
+```python
+person = imdb.find_person_by_id("nm0001486")
+
+person.name => "Sidney Lumet"
 ```
 
 ### Find a movie trailer poster

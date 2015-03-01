@@ -108,7 +108,8 @@ class Imdb(object):
             return False
 
         # get the full cast information, add key if not present
-        result["data"][str("credits")] = self.get_credits(imdb_id) if credits else {}
+        result["data"][str("credits")] = \
+            self.get_credits(imdb_id) if credits else {}
 
         if (
             self.exclude_episodes is True and
@@ -162,7 +163,8 @@ class Imdb(object):
         """
         Check imdb id is a 7 digit number
         """
-        prefixes = {'title': 'tt', 'person': 'nm', 'company': 'co', 'character': 'ch'}
+        prefixes = {'title': 'tt', 'person': 'nm',
+                    'company': 'co', 'character': 'ch'}
         prefix = prefixes.get(itemtype, 'tt')
         match = re.findall(r'(?:tt|nm|co|ch)?(\d+)', imdb_id, re.IGNORECASE)
         if match:
