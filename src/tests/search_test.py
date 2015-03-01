@@ -4,7 +4,7 @@ try:
 except ImportError:
     import unittest
 
-imdb = Imdb({'anonymize': False})
+imdb = Imdb(anonymize=False)
 
 
 class TestSearch(unittest.TestCase):

@@ -52,14 +52,11 @@ USER_AGENTS = (
 
 class Imdb(object):
 
-    def __init__(self, options=None):
+    def __init__(self, **options):
         self.locale = 'en_US'
         self.base_uri = BASE_URI
         self.timestamp = time.mktime(datetime.date.today().timetuple())
         self.user_agent = random.choice(USER_AGENTS)
-
-        if options is None:
-            options = {}
 
         self.options = options
         if options.get('anonymize') is True:

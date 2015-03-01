@@ -4,7 +4,7 @@ try:
 except ImportError:
     import unittest
 
-imdb = Imdb({'anonymize': False})
+imdb = Imdb(anonymize=False)
 movie = imdb.find_movie_by_id("tt0382932")
 
 

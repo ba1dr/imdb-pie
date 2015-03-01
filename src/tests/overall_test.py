@@ -1,8 +1,8 @@
 from imdbpie import Imdb
 
-imdb = Imdb({'anonymize': False,
-             'locale': 'en_US',
-             'exclude_episodes': False})
+imdb = Imdb(anonymize=False,
+            locale='en_US',
+            exclude_episodes=False)
 movie = imdb.find_movie_by_id('tt0705926')
 
 

@@ -26,7 +26,7 @@ class TestCache(unittest.TestCase):
 
     def test_cache_populated(self):
         """ Tests the cache is populated correctly """
-        self.imdb = Imdb({'cache': True, 'cache_dir': '/tmp/imdbpie-test'})
+        self.imdb = Imdb(cache=True, cache_dir='/tmp/imdbpie-test')
 
         self.assertEqual(self._get_cache_size(), 0)
         movie = self.imdb.find_movie_by_id("tt0382932")

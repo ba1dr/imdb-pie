@@ -4,7 +4,7 @@ try:
 except ImportError:
     import unittest
 
-imdb = Imdb({'anonymize': False})
+imdb = Imdb(anonymize=False)
 reviews = imdb.title_reviews(imdb_id="tt0468569", limit=3)
 
 
