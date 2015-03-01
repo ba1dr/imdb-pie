@@ -166,10 +166,10 @@ class Imdb(object):
         prefixes = {'title': 'tt', 'person': 'nm',
                     'company': 'co', 'character': 'ch'}
         prefix = prefixes.get(itemtype, 'tt')
-        match = re.findall(r'(?:tt|nm|co|ch)?(\d+)', imdb_id, re.IGNORECASE)
+        match = re.findall(r'^(?:tt|nm|co|ch)?(\d{1,7})$', str(imdb_id), re.IGNORECASE)
         if match:
             id_num = match[0]
-            if len(id_num) is not 7:
+            if len(id_num) < 7:
                 # pad id to 7 digits
                 id_num = id_num.zfill(7)
             return prefix + id_num

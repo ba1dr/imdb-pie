@@ -25,5 +25,17 @@ class TestPerson(unittest.TestCase):
     def test_writers_role(self):
         self.assertFalse(movie.writers_summary[0].role)
 
+    def test_search_person_lumet(self):
+        self.results = imdb.find_person_by_name("Sidney Lumet")
+        self.assertGreater(len(self.results), 1)
+
+    def test_search_person_bad(self):
+        self.results = imdb.find_person_by_name("afajshfd1kajhsdk3fjahskdj55fha")
+        self.assertEquals(len(self.results), 0)
+
+    def test_search_person_by_id(self):
+        person = imdb.find_person_by_id("nm0001486")
+        self.assertEqual(person.name, 'Sidney Lumet')
+
 if __name__ == '__main__':
     unittest.main()

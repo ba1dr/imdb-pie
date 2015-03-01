@@ -13,6 +13,10 @@ class TestSearch(unittest.TestCase):
         self.results = imdb.find_by_title("batman")
         self.assertGreater(len(self.results), 15)
 
+    def test_batman_1996(self):
+        self.results = imdb.find_by_title("batman forever", 1996)
+        self.assertEquals(len(self.results), 1)
+
     def test_truman(self):
         self.results = imdb.find_by_title("the truman show")
         self.assertGreater(len(self.results), 1)
