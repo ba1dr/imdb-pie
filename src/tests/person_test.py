@@ -30,7 +30,7 @@ class TestPerson(unittest.TestCase):
         self.assertGreater(len(self.results), 1)
 
     def test_search_person_bad(self):
-        self.results = imdb.find_person_by_name("afajshfd1kajhsdk3fjahskdj55fha")
+        self.results = imdb.find_person_by_name("afajshfd1kajhsdk3fjaskdj55a")
         self.assertEquals(len(self.results), 0)
 
     def test_search_person_by_id(self):
