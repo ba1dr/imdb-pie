@@ -92,7 +92,7 @@ class Imdb(object):
         url = 'https://{0}{1}?{2}'.format(self.base_uri, path, query_params)
         return url
 
-    def find_movie_by_id(self, imdb_id, json=False):
+    def find_movie_by_id(self, imdb_id, json=False, credits=True):
         imdb_id = self.validate_id(imdb_id)
         url = self.build_url('/title/maindetails', {'tconst': imdb_id})
         result = self.get(url)
@@ -106,7 +106,7 @@ class Imdb(object):
             return False
 
         # get the full cast information, add key if not present
-        result["data"][str("credits")] = self.get_credits(imdb_id)
+        result["data"][str("credits")] = self.get_credits(imdb_id) if credits else {}
 
         if (
             self.exclude_episodes is True and
