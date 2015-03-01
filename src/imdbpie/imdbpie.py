@@ -152,7 +152,7 @@ class Imdb(object):
         else:
             return False
 
-    def find_by_title(self, title):
+    def find_by_title(self, title, production_year=None):
         default_find_by_title_params = {
             'json': '1',
             'nr': 1,
@@ -188,6 +188,9 @@ class Imdb(object):
                         'year': year,
                         'imdb_id': r['id']
                     }
+                    if production_year and year:
+                        if str(production_year) != str(year):
+                            continue
                     title_results.append(title_match)
 
         return title_results
