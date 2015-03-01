@@ -53,6 +53,8 @@ USER_AGENTS = (
 class Imdb(object):
 
     def __init__(self, **options):
+        if options.get('debug') is True:
+            logger.level = logging.DEBUG
         self.locale = 'en_US'
         self.base_uri = BASE_URI
         self.timestamp = time.mktime(datetime.date.today().timetuple())
@@ -101,7 +103,7 @@ class Imdb(object):
         # if the result is a re-dir, see imdb id tt0000021 for e.g...
         if (
             result["data"].get('tconst') !=
-            result["data"].get('news').get('channel')
+            result["data"].get('news', {}).get('channel')
         ):
             return False
 
@@ -119,6 +121,24 @@ class Imdb(object):
             title = Title(**result["data"])
             return title
 
+    def find_person_by_id(self, imdb_id, json=False):
+        imdb_id = self.validate_id(imdb_id, itemtype='person')
+        url = self.build_url('/name/maindetails', {'nconst': imdb_id})
+        result = self.get(url)
+        if 'error' in result:
+            return False
+        # if the result is a re-dir, see imdb id tt0000021 for e.g...
+        if (
+            result["data"].get('nconst') !=
+            result["data"].get('news', {}).get('channel')
+        ):
+            return False
+        if json is True:
+            return result["data"]
+        else:
+            person = Person(**result["data"])
+            return person
+
     def get_credits(self, imdb_id):
         imdb_id = self.validate_id(imdb_id)
         url = self.build_url('/title/fullcredits', {'tconst': imdb_id})
@@ -132,23 +152,25 @@ class Imdb(object):
         """
         Check with imdb, does a movie exist
         """
-        imdb_id = self.validate_id(imdb_id)
+        imdb_id = self.validate_id(imdb_id, itemtype='title')
         if imdb_id:
             results = self.find_movie_by_id(imdb_id)
             return True if results else False
         return False
 
-    def validate_id(self, imdb_id):
+    def validate_id(self, imdb_id, itemtype='title'):
         """
         Check imdb id is a 7 digit number
         """
-        match = re.findall(r'tt(\d+)', imdb_id, re.IGNORECASE)
+        prefixes = {'title': 'tt', 'person': 'nm', 'company': 'co', 'character': 'ch'}
+        prefix = prefixes.get(itemtype, 'tt')
+        match = re.findall(r'(?:tt|nm|co|ch)?(\d+)', imdb_id, re.IGNORECASE)
         if match:
             id_num = match[0]
             if len(id_num) is not 7:
                 # pad id to 7 digits
                 id_num = id_num.zfill(7)
-            return 'tt' + id_num
+            return prefix + id_num
         else:
             return False
 
@@ -194,6 +216,41 @@ class Imdb(object):
                     title_results.append(title_match)
 
         return title_results
+
+    def find_person_by_name(self, name):
+        default_find_by_name_params = {
+            'json': '1',
+            'nr': 1,
+            'nm': 'on',
+            'q': name
+        }
+        query_params = urlencode(default_find_by_name_params)
+        results = self.get(
+            ('http://www.imdb.com/xml/find?{0}').format(query_params)
+        )
+
+        keys = (
+            'name_popular',
+            'name_exact',
+            'name_approx',
+            'name_substring'
+        )
+        name_results = []
+
+        html_unescaped = htmlparser.HTMLParser().unescape
+
+        # Loop through all results and build a list with popular matches first
+        for key in keys:
+            if key in results:
+                for r in results[key]:
+                    name_match = {
+                        'name': html_unescaped(r['name']),
+                        'description': html_unescaped(r['description']),
+                        'imdb_id': r['id']
+                    }
+                    name_results.append(name_match)
+
+        return name_results
 
     def top_250(self):
         url = self.build_url('/chart/top', {})
@@ -282,6 +339,7 @@ class Imdb(object):
             json.dump(resp, f)
 
     def get(self, url):
+        logger.debug("Sending request to {url}".format(url=url))
         if self.caching_enabled:
             cached_item_path = self._get_cache_item_path(url)
             cached_resp = self._get_cached_response(cached_item_path)
@@ -300,6 +358,7 @@ class Imdb(object):
 class Person(object):
 
     def __init__(self, **person):
+        self.data = person
         p = person.get('name')
         # token and label are the persons categorisation
         # e.g token: writers label: Series writing credits
@@ -311,12 +370,16 @@ class Person(object):
         self.attr = person.get('attr')
 
         # other primary information about their part
-        self.name = p.get('name')
-        self.imdb_id = p.get('nconst')
-        self.role = (
-            person.get('char').split('/') if person.get('char') else None
-        )
-        self.job = person.get('job')
+        if isinstance(p, dict):  # if passed as credit's part
+            self.name = p.get('name')
+            self.imdb_id = p.get('nconst')
+            self.role = (
+                person.get('char').split('/') if person.get('char') else None
+            )
+            self.job = person.get('job')
+        else:
+            self.name = p
+            self.imdb_id = person.get('nconst')
 
     def __repr__(self):
         repr = '<Person: {0} ({1})>'
