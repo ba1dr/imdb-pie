@@ -166,7 +166,8 @@ class Imdb(object):
         prefixes = {'title': 'tt', 'person': 'nm',
                     'company': 'co', 'character': 'ch'}
         prefix = prefixes.get(itemtype, 'tt')
-        match = re.findall(r'^(?:tt|nm|co|ch)?(\d{1,7})$', str(imdb_id), re.IGNORECASE)
+        match = re.findall(r'^(?:tt|nm|co|ch)?(\d{1,7})$',
+                           str(imdb_id), re.IGNORECASE)
         if match:
             id_num = match[0]
             if len(id_num) < 7:
@@ -474,7 +475,8 @@ class Title(object):
         if self.data.get('credits'):
             for credit in self.data['credits']:
                 """
-                Possible tokens: directors, cast, writers, producers and others
+                Possible tokens: directors, cast, writers,
+                producers and others
                 """
                 for person in credit['list']:
                     person_extra = {
