@@ -197,7 +197,7 @@ class Imdb(object):
             'nr': 1,
             'tt': 1,
             'ttype': tkind,
-            'q': title
+            'q': title.encode('utf-8')
         }
         query_params = urlencode(default_find_by_title_params)
         results = self.get(
@@ -248,7 +248,7 @@ class Imdb(object):
             'json': '1',
             'nr': 1,
             'nm': 'on',
-            'q': name
+            'q': name.encode('utf-8')
         }
         query_params = urlencode(default_find_by_name_params)
         results = self.get(
