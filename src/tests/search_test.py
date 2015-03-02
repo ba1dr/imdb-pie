@@ -19,7 +19,8 @@ class TestSearch(unittest.TestCase):
 
     def test_title_kind(self):
         ttitle = "Batman: Arkham Knight"
-        # more than 1 result by 'tt' search, but 1 exact result for 'video game'
+        # more than 1 result by 'tt' search,
+        # but 1 exact result for 'video game'
         self.results = imdb.find_by_title(ttitle)
         reslen1 = len(self.results)
         self.results = imdb.find_by_title(ttitle, kind='video game')
