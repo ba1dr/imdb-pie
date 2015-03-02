@@ -17,6 +17,15 @@ class TestSearch(unittest.TestCase):
         self.results = imdb.find_by_title("batman forever", 1996)
         self.assertEquals(len(self.results), 1)
 
+    def test_title_kind(self):
+        ttitle = "Batman: Arkham Knight"
+        # more than 1 result by 'tt' search, but 1 exact result for 'video game'
+        self.results = imdb.find_by_title(ttitle)
+        reslen1 = len(self.results)
+        self.results = imdb.find_by_title(ttitle, kind='video game')
+        reslen2 = len(self.results)
+        self.assertGreater(reslen1, reslen2)  # second returns less results
+
     def test_truman(self):
         self.results = imdb.find_by_title("the truman show")
         self.assertGreater(len(self.results), 1)

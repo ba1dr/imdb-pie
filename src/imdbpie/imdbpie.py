@@ -177,11 +177,26 @@ class Imdb(object):
         else:
             return False
 
-    def find_by_title(self, title, production_year=None):
+    def find_by_title(self, title, production_year=None, kind='any',
+                      exact_title=False):
+        tkind = 'tt'
+        movie_kinds = {  # extended search
+            'tt': ['any'],
+            'ft': ['title', 'movie'],
+            'tv': ['tv movie'],
+            'ep': ['tv episode'],
+            'vg': ['video game', 'game'],
+        }
+        kind = (kind or 'any').lower()  # normalize
+        for k in movie_kinds:
+            if k == kind or kind in movie_kinds[k]:
+                tkind = k
+                break
         default_find_by_title_params = {
             'json': '1',
             'nr': 1,
-            'tt': 'on',
+            'tt': 1,
+            'ttype': tkind,
             'q': title
         }
         query_params = urlencode(default_find_by_title_params)
@@ -198,19 +213,27 @@ class Imdb(object):
         title_results = []
 
         html_unescaped = htmlparser.HTMLParser().unescape
-
+        desc_rex = re.compile(
+            r'^(\d{4})(?:\s*([^,]+)?(,\s*\<a href[^\>]+\>[^\>]+)?)?', re.I)
         # Loop through all results and build a list with popular matches first
         for key in keys:
             if key in results:
                 for r in results[key]:
                     year = None
-                    year_match = re.search(r'(\d{4})', r['title_description'])
-                    if year_match:
-                        year = year_match.group(0)
+                    mkind = ''
+                    mtitle = html_unescaped(r['title'])
+                    if exact_title:
+                        if unicode(mtitle) != unicode(title):
+                            continue
+                    m = desc_rex.search(r['title_description'])
+                    if m:
+                        year = m.group(1)
+                        mkind = m.group(2)
 
                     title_match = {
-                        'title': html_unescaped(r['title']),
+                        'title': mtitle,
                         'year': year,
+                        'kind': mkind,
                         'imdb_id': r['id']
                     }
                     if production_year and year:
