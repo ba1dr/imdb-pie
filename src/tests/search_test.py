@@ -27,6 +27,10 @@ class TestSearch(unittest.TestCase):
         reslen2 = len(self.results)
         self.assertGreater(reslen1, reslen2)  # second returns less results
 
+    def test_company(self):
+        self.results = imdb.find_company_by_name("MTS")
+        self.assertEquals(len(self.results), 1)
+
     def test_truman(self):
         self.results = imdb.find_by_title("the truman show")
         self.assertGreater(len(self.results), 1)

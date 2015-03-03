@@ -223,7 +223,7 @@ class Imdb(object):
                     mkind = ''
                     mtitle = html_unescaped(r['title'])
                     if exact_title:
-                        if unicode(mtitle) != unicode(title):
+                        if mtitle.encode('utf-8') != title.encode('utf-8'):
                             continue
                     m = desc_rex.search(r['title_description'])
                     if m:
@@ -275,6 +275,45 @@ class Imdb(object):
                         'imdb_id': r['id']
                     }
                     name_results.append(name_match)
+
+        return name_results
+
+    def find_company_by_name(self, name):
+        """
+            There is likely a bug in IMDb API - it returns empty fields in
+            json request. But works in XML.
+        """
+        default_find_by_name_params = {
+            'json': '0',
+            'nr': 1,
+            'ex': 1,
+            'co': 'on',
+            'q': name.encode('utf-8')
+        }
+        query_params = urlencode(default_find_by_name_params)
+        url = ('http://www.imdb.com/xml/find?{0}').format(query_params)
+        result = requests.get(url, headers={'User-Agent': self.user_agent})
+        if not result.ok:
+            return None
+        data = result.content.decode('utf-8')
+        name_results = []
+
+        html_unescaped = htmlparser.HTMLParser().unescape
+        # we will use regex instead on XML parser like lxml:
+        # to avoid dependency and to fasten the processing
+        xrex = re.compile(
+            r'\<ImdbEntity id=\"((?:tt|nm|co|ch)[\d]+)\"\>([^\<]*)' +
+            '\<Description\>([^\<]*)\<\/Description\>\<\/ImdbEntity\>', re.I)
+        results = xrex.findall(data)
+        for imdb_id, company_name, description in results:
+            if company_name != name.encode('utf-8'):
+                continue  # 'ex=1' does the same
+            name_match = {
+                'name': html_unescaped(name),
+                'description': html_unescaped(description),
+                'imdb_id': imdb_id
+            }
+            name_results.append(name_match)
 
         return name_results
 
