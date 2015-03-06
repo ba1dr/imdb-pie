@@ -183,7 +183,7 @@ class Imdb(object):
         movie_kinds = {  # extended search
             'tt': ['any'],
             'ft': ['title', 'movie'],
-            'tv': ['tv movie'],
+            'tv': ['tv movie', 'TV mini-series', 'tv series'],
             'ep': ['tv episode'],
             'vg': ['video game', 'game'],
         }
@@ -292,6 +292,7 @@ class Imdb(object):
         }
         query_params = urlencode(default_find_by_name_params)
         url = ('http://www.imdb.com/xml/find?{0}').format(query_params)
+        logger.debug("Sending request to {url}".format(url=url))
         result = requests.get(url, headers={'User-Agent': self.user_agent})
         if not result.ok:
             return None
