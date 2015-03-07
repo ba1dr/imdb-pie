@@ -38,6 +38,34 @@ imdb.find_by_title("The Dark Knight", 2013) => [{'imdb_id': u'tt2166834', 'title
   'year': u'2013'}, {'imdb_id': u'tt2257218', 'title': u'The Dark Knight Retires', 'year': u'2013'}, ...]
 ```
 
+### Search for a movie by title, also by aka titles (for international names)
+```python
+# search only by title
+imdb.find_by_title(title='Francotirador', kind='movie', exact_title=True)
+[]  # found nothing
+imdb.find_by_title(title='Francotirador', production_year=2014, exact_title=True)
+[]  # found nothing
+
+imdb.find_by_title(title='Francotirador', aka_titles=['American Sniper'], kind='movie', exact_title=True)
+ =>
+[{'episode_title': u'',
+  'imdb_id': u'tt2179136',
+  'kind': None,
+  'title': u'American Sniper',
+  'year': u'2014'}]
+```
+
+### Search for a exact tv episode by title, episode number, aka-names
+```python
+imdb.find_by_title(title='The New Price Is Right', episode_num='2.49', production_year=1973, kind='tv episode', aka_titles=['the price is right'])
+    =>
+[{'episode_title': u'The Price Is Right: Episode #2.49',
+  'imdb_id': u'tt1187172',
+  'kind': u'TV episode',
+  'title': u'The Price Is Right',
+  'year': u'1973'}]
+```
+
 ### Find a movie by its imdb_id
 ```python
 movie = imdb.find_movie_by_id("tt0468569")

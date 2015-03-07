@@ -178,13 +178,16 @@ class Imdb(object):
             return False
 
     def find_by_title(self, title, production_year=None, kind='any',
-                      exact_title=False):
+                      exact_title=False, episode_for=None, aka_titles=None):
+        html_unescaped = htmlparser.HTMLParser().unescape
+        # lowercasing all aka_titles to compare:
+        aka_titles = [html_unescaped(t).lower() for t in (aka_titles or [])]
         tkind = 'tt'
         movie_kinds = {  # extended search
             'tt': ['any'],
             'ft': ['title', 'movie'],
             'tv': ['tv movie', 'TV mini-series', 'tv series'],
-            'ep': ['tv episode'],
+            'ep': ['episode', 'tv episode'],
             'vg': ['video game', 'game'],
         }
         kind = (kind or 'any').lower()  # normalize
@@ -192,16 +195,26 @@ class Imdb(object):
             if k == kind or kind in movie_kinds[k]:
                 tkind = k
                 break
+        compare_title = search_title = html_unescaped(title)
+        exact_search = exact_title
+        if aka_titles:
+            # will be filtered by results
+            exact_search = False
+        if tkind == 'ep' and episode_for:  # episodes
+            # search_title = "Episode #%s" % episode_num
+            compare_title = html_unescaped(episode_for)
+            exact_search = True  # search by exact episode's number
         default_find_by_title_params = {
             'json': '1',
             'nr': 1,
             'tt': 1,
             'ttype': tkind,
-            'q': title.encode('utf-8')
+            'ex': 1 if exact_search else 0,  # test
+            'q': search_title
         }
         query_params = urlencode(default_find_by_title_params)
         results = self.get(
-            ('http://www.imdb.com/xml/find?{0}').format(query_params)
+            ('http://akas.imdb.com/xml/find?{0}').format(query_params)
         )
 
         keys = (
@@ -212,9 +225,10 @@ class Imdb(object):
         )
         title_results = []
 
-        html_unescaped = htmlparser.HTMLParser().unescape
         desc_rex = re.compile(
-            r'^(\d{4})(?:\s*([^,]+)?(,\s*\<a href[^\>]+\>[^\>]+)?)?', re.I)
+            ur'^(\d{4})(?:\s*([^,]+)?(,\s*\<a href[^\>]+\>[^\>]+)?)?',
+            re.I | re.U)
+        ep_rex = re.compile(ur'^(.+):\s*' + search_title, re.I | re.U)
         # Loop through all results and build a list with popular matches first
         for key in keys:
             if key in results:
@@ -222,13 +236,20 @@ class Imdb(object):
                     year = None
                     mkind = ''
                     mtitle = html_unescaped(r['title'])
-                    if exact_title:
-                        if mtitle.encode('utf-8') != title.encode('utf-8'):
+                    episode_title = html_unescaped(r['episode_title'])
+                    title_description = html_unescaped(r['title_description'])
+                    if episode_title:
+                        m = ep_rex.search(episode_title)
+                        if m:
+                            mtitle = html_unescaped(m.group(1))
+                    if exact_title or exact_search:
+                        if mtitle.lower() not in \
+                                aka_titles + [compare_title.lower()]:
                             continue
-                    m = desc_rex.search(r['title_description'])
+                    m = desc_rex.search(title_description)
                     if m:
                         year = m.group(1)
-                        mkind = m.group(2)
+                        mkind = m.group(2) or ''
 
                     title_match = {
                         'title': mtitle,
@@ -236,6 +257,8 @@ class Imdb(object):
                         'kind': mkind,
                         'imdb_id': r['id']
                     }
+                    if mkind.lower().find('episode') >= 0:  # if episode
+                        title_match['episode_title'] = search_title
                     if production_year and year:
                         if str(production_year) != str(year):
                             continue
@@ -243,12 +266,16 @@ class Imdb(object):
 
         return title_results
 
+    def find_episode_by_title(self, title, episode_for, year, aka_titles=None):
+        pass  # TODO
+
     def find_person_by_name(self, name):
+        html_unescaped = htmlparser.HTMLParser().unescape
         default_find_by_name_params = {
             'json': '1',
             'nr': 1,
             'nm': 'on',
-            'q': name.encode('utf-8')
+            'q': html_unescaped(name)
         }
         query_params = urlencode(default_find_by_name_params)
         results = self.get(
@@ -262,8 +289,6 @@ class Imdb(object):
             'name_substring'
         )
         name_results = []
-
-        html_unescaped = htmlparser.HTMLParser().unescape
 
         # Loop through all results and build a list with popular matches first
         for key in keys:
@@ -283,12 +308,13 @@ class Imdb(object):
             There is likely a bug in IMDb API - it returns empty fields in
             json request. But works in XML.
         """
+        html_unescaped = htmlparser.HTMLParser().unescape
         default_find_by_name_params = {
             'json': '0',
             'nr': 1,
             'ex': 1,
             'co': 'on',
-            'q': name.encode('utf-8')
+            'q': html_unescaped(name)
         }
         query_params = urlencode(default_find_by_name_params)
         url = ('http://www.imdb.com/xml/find?{0}').format(query_params)
@@ -299,15 +325,14 @@ class Imdb(object):
         data = result.content.decode('utf-8')
         name_results = []
 
-        html_unescaped = htmlparser.HTMLParser().unescape
         # we will use regex instead on XML parser like lxml:
         # to avoid dependency and to fasten the processing
         xrex = re.compile(
-            r'\<ImdbEntity id=\"((?:tt|nm|co|ch)[\d]+)\"\>([^\<]*)' +
+            ur'\<ImdbEntity id=\"((?:tt|nm|co|ch)[\d]+)\"\>([^\<]*)' +
             '\<Description\>([^\<]*)\<\/Description\>\<\/ImdbEntity\>', re.I)
         results = xrex.findall(data)
         for imdb_id, company_name, description in results:
-            if company_name != name.encode('utf-8'):
+            if company_name != html_unescaped(name):
                 continue  # 'ex=1' does the same
             name_match = {
                 'name': html_unescaped(name),
@@ -413,7 +438,7 @@ class Imdb(object):
                 return cached_resp
 
         r = requests.get(url, headers={'User-Agent': self.user_agent})
-        response = json.loads(r.content.decode('utf-8'))
+        response = json.loads(htmlparser.HTMLParser().unescape(r.text))
 
         if self.caching_enabled:
             self._cache_response(cached_item_path, response)
