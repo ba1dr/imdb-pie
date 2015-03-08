@@ -19,7 +19,7 @@ except ImportError:
     import HTMLParser as htmlparser
 import requests
 
-from .utils import try_get_unicode as _tgu
+from .utils import try_get_unicode as _tgu, dict_to_str
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class Imdb(object):
         query_params = dict(
             list(default_params.items()) + list(params.items())
         )
-        query_params = urlencode(query_params)
+        query_params = urlencode(dict_to_str(query_params))
         url = 'https://{0}{1}?{2}'.format(self.base_uri, path, query_params)
         return url
 
@@ -225,7 +225,7 @@ class Imdb(object):
             'ex': 1 if exact_search else 0,  # test
             'q': search_title
         }
-        query_params = urlencode(default_find_by_title_params)
+        query_params = urlencode(dict_to_str(default_find_by_title_params))
         results = self.get(
             ('http://akas.imdb.com/xml/find?{0}').format(query_params)
         )
@@ -303,7 +303,7 @@ class Imdb(object):
             'nm': 'on',
             'q': html_unescaped(name)
         }
-        query_params = urlencode(default_find_by_name_params)
+        query_params = urlencode(dict_to_str(default_find_by_name_params))
         results = self.get(
             ('http://www.imdb.com/xml/find?{0}').format(query_params)
         )
@@ -343,7 +343,7 @@ class Imdb(object):
             'co': 'on',
             'q': html_unescaped(name)
         }
-        query_params = urlencode(default_find_by_name_params)
+        query_params = urlencode(dict_to_str(default_find_by_name_params))
         url = ('http://www.imdb.com/xml/find?{0}').format(query_params)
         logger.debug("Sending request to {url}".format(url=url))
         result = requests.get(url, headers={'User-Agent': self.user_agent})

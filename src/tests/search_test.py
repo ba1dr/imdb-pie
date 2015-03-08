@@ -55,6 +55,14 @@ class TestSearch(unittest.TestCase):
         self.assertEquals(self.results[0]['kind'], u'TV episode')
         self.assertEquals(self.results[0]['episode_title'], u'Episode #2.49')
 
+    def test_unicode(self):
+        # test unicode search
+        t = u'Sukurappu t\xeech\xe2: Ky\xf4shi saisei'
+        self.results = imdb.find_by_title(t, 2008, exact_title=True,
+                                          aka_titles=['Scrap Teacher'])
+        self.assertEquals(len(self.results), 1)
+        self.assertEquals(self.results[0]['imdb_id'], u'tt1277983')
+
     def test_company(self):
         self.results = imdb.find_company_by_name("MTS")
         self.assertEquals(len(self.results), 1)
