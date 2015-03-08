@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
 
 import datetime
@@ -17,10 +19,12 @@ except ImportError:
     import HTMLParser as htmlparser
 import requests
 
+from .utils import try_get_unicode as _tgu
+
 logger = logging.getLogger(__name__)
 
 BASE_URI = 'app.imdb.com'
-API_KEY = '2wex6aeu6a8q9e49k7sfvufd6rhh0n'
+API_KEY = u'2wex6aeu6a8q9e49k7sfvufd6rhh0n'
 SHA1_KEY = hashlib.sha1(API_KEY.encode('utf8')).hexdigest()
 USER_AGENTS = (
     'Mozilla/5.0 (iPhone; CPU iPhone OS 5_0_1 like Mac OS X) '
@@ -183,9 +187,12 @@ class Imdb(object):
         """
             imdb_index - can be additional roman nimber (I, II, III, etc)
         """
+        if aka_titles and isinstance(aka_titles, (str, unicode)):
+            aka_titles = [aka_titles]
         html_unescaped = htmlparser.HTMLParser().unescape
         # lowercasing all aka_titles to compare:
-        aka_titles = [html_unescaped(t).lower() for t in (aka_titles or [])]
+        aka_titles = [html_unescaped(_tgu(t)).lower()
+                      for t in (aka_titles or [])]
         tkind = 'tt'
         movie_kinds = {  # extended search
             'tt': ['any'],
@@ -194,6 +201,8 @@ class Imdb(object):
             'ep': ['episode', 'tv episode'],
             'vg': ['video game', 'game'],
         }
+        title = _tgu(title)
+        episode_for = _tgu(episode_for)
         kind = (kind or 'any').lower()  # normalize
         for k in movie_kinds:
             if k == kind or kind in movie_kinds[k]:
@@ -214,7 +223,7 @@ class Imdb(object):
             'tt': 1,
             'ttype': tkind,
             'ex': 1 if exact_search else 0,  # test
-            'q': search_title.encode('utf-8')
+            'q': search_title
         }
         query_params = urlencode(default_find_by_title_params)
         results = self.get(
@@ -230,11 +239,14 @@ class Imdb(object):
         title_results = []
 
         desc_rex = re.compile(
-            r'^(\d{4})(?:\/(\w+))?(?:\s*([^,]+)?' +
+            r'^(\d{4}|\?\?\?\?)(?:\/(\w+))?(?:\s*([^,]+)?' +
             r'(,\s*\<a href[^\>]+\>[^\>]+)?)?',
             re.I | re.U)
-        ep_rex = re.compile(r'^(.+):\s*(' + re.escape(search_title) + '|.+)',
-                            re.I | re.U)
+        ep_rex = re.compile(r'^(.+):\s*(.+)', re.I | re.U)
+        if tkind == 'ep' and episode_for:
+            ep_rex = re.compile(r'^(.+):\s*(' +
+                                re.escape(search_title) + r'|.+)',
+                                re.I | re.U)
         # Loop through all results and build a list with popular matches first
         for key in keys:
             if key in results:
@@ -249,13 +261,17 @@ class Imdb(object):
                         m = ep_rex.search(episode_title)
                         if m:
                             mtitle = html_unescaped(m.group(1))
+                            episode_title = m.group(2)
                     if exact_title or exact_search:
                         if mtitle.lower() not in \
                                 aka_titles + [compare_title.lower()]:
+                            # print(u"%s - skip" % mtitle)
                             continue
                     m = desc_rex.search(title_description)
                     if m:
                         year = m.group(1)
+                        if not year.isdigit():
+                            year = None
                         index = m.group(2)
                         mkind = m.group(3) or ''
 
@@ -270,7 +286,7 @@ class Imdb(object):
                         if imdb_index and imdb_index != index:
                             continue
                     if mkind.lower().find('episode') >= 0:  # if episode
-                        title_match['episode_title'] = search_title
+                        title_match['episode_title'] = episode_title
                     if production_year and year:
                         if str(production_year) != str(year):
                             continue
@@ -278,11 +294,9 @@ class Imdb(object):
 
         return title_results
 
-    def find_episode_by_title(self, title, episode_for, year, aka_titles=None):
-        pass  # TODO
-
     def find_person_by_name(self, name):
         html_unescaped = htmlparser.HTMLParser().unescape
+        name = _tgu(name)
         default_find_by_name_params = {
             'json': '1',
             'nr': 1,
@@ -321,6 +335,7 @@ class Imdb(object):
             json request. But works in XML.
         """
         html_unescaped = htmlparser.HTMLParser().unescape
+        name = _tgu(name)
         default_find_by_name_params = {
             'json': '0',
             'nr': 1,

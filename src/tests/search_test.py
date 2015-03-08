@@ -53,7 +53,7 @@ class TestSearch(unittest.TestCase):
         self.assertEquals(len(self.results), 1)
         self.assertEquals(self.results[0]['imdb_id'], u'tt1187172')
         self.assertEquals(self.results[0]['kind'], u'TV episode')
-        self.assertEquals(self.results[0]['episode_title'], u'Episode (#2.49)')
+        self.assertEquals(self.results[0]['episode_title'], u'Episode #2.49')
 
     def test_company(self):
         self.results = imdb.find_company_by_name("MTS")
