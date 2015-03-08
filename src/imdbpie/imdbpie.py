@@ -178,7 +178,11 @@ class Imdb(object):
             return False
 
     def find_by_title(self, title, production_year=None, kind='any',
-                      exact_title=False, episode_for=None, aka_titles=None):
+                      exact_title=False, episode_for=None, aka_titles=None,
+                      imdb_index=None):
+        """
+            imdb_index - can be additional roman nimber (I, II, III, etc)
+        """
         html_unescaped = htmlparser.HTMLParser().unescape
         # lowercasing all aka_titles to compare:
         aka_titles = [html_unescaped(t).lower() for t in (aka_titles or [])]
@@ -226,7 +230,8 @@ class Imdb(object):
         title_results = []
 
         desc_rex = re.compile(
-            ur'^(\d{4})(?:\s*([^,]+)?(,\s*\<a href[^\>]+\>[^\>]+)?)?',
+            ur'^(\d{4})(?:\/(\w+))?(?:\s*([^,]+)?' +
+            ur'(,\s*\<a href[^\>]+\>[^\>]+)?)?',
             re.I | re.U)
         ep_rex = re.compile(ur'^(.+):\s*' + search_title, re.I | re.U)
         # Loop through all results and build a list with popular matches first
@@ -235,6 +240,7 @@ class Imdb(object):
                 for r in results[key]:
                     year = None
                     mkind = ''
+                    index = None
                     mtitle = html_unescaped(r['title'])
                     episode_title = html_unescaped(r['episode_title'])
                     title_description = html_unescaped(r['title_description'])
@@ -249,7 +255,8 @@ class Imdb(object):
                     m = desc_rex.search(title_description)
                     if m:
                         year = m.group(1)
-                        mkind = m.group(2) or ''
+                        index = m.group(2)
+                        mkind = m.group(3) or ''
 
                     title_match = {
                         'title': mtitle,
@@ -257,6 +264,10 @@ class Imdb(object):
                         'kind': mkind,
                         'imdb_id': r['id']
                     }
+                    if index:
+                        title_match['index'] = index
+                        if imdb_index and imdb_index != index:
+                            continue
                     if mkind.lower().find('episode') >= 0:  # if episode
                         title_match['episode_title'] = search_title
                     if production_year and year:

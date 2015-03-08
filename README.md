@@ -57,7 +57,7 @@ imdb.find_by_title(title='Francotirador', aka_titles=['American Sniper'], kind='
 
 ### Search for a exact tv episode by title, episode number, aka-names
 ```python
-imdb.find_by_title(title='The New Price Is Right', episode_num='2.49', production_year=1973, kind='tv episode', aka_titles=['the price is right'])
+imdb.find_by_title(title='Episode (#2.49)', production_year=1973, episode_for='The New Price Is Right', kind='tv episode', aka_titles=['the price is right'])
     =>
 [{'episode_title': u'The Price Is Right: Episode #2.49',
   'imdb_id': u'tt1187172',
