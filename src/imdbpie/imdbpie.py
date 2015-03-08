@@ -214,7 +214,7 @@ class Imdb(object):
             'tt': 1,
             'ttype': tkind,
             'ex': 1 if exact_search else 0,  # test
-            'q': search_title
+            'q': search_title.encode('utf-8')
         }
         query_params = urlencode(default_find_by_title_params)
         results = self.get(
@@ -230,10 +230,11 @@ class Imdb(object):
         title_results = []
 
         desc_rex = re.compile(
-            ur'^(\d{4})(?:\/(\w+))?(?:\s*([^,]+)?' +
-            ur'(,\s*\<a href[^\>]+\>[^\>]+)?)?',
+            r'^(\d{4})(?:\/(\w+))?(?:\s*([^,]+)?' +
+            r'(,\s*\<a href[^\>]+\>[^\>]+)?)?',
             re.I | re.U)
-        ep_rex = re.compile(ur'^(.+):\s*' + search_title, re.I | re.U)
+        ep_rex = re.compile(r'^(.+):\s*(' + re.escape(search_title) + '|.+)',
+                            re.I | re.U)
         # Loop through all results and build a list with popular matches first
         for key in keys:
             if key in results:
@@ -339,7 +340,7 @@ class Imdb(object):
         # we will use regex instead on XML parser like lxml:
         # to avoid dependency and to fasten the processing
         xrex = re.compile(
-            ur'\<ImdbEntity id=\"((?:tt|nm|co|ch)[\d]+)\"\>([^\<]*)' +
+            r'\<ImdbEntity id=\"((?:tt|nm|co|ch)[\d]+)\"\>([^\<]*)' +
             '\<Description\>([^\<]*)\<\/Description\>\<\/ImdbEntity\>', re.I)
         results = xrex.findall(data)
         for imdb_id, company_name, description in results:

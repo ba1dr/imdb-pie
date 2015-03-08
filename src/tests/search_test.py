@@ -27,6 +27,34 @@ class TestSearch(unittest.TestCase):
         reslen2 = len(self.results)
         self.assertGreater(reslen1, reslen2)  # second returns less results
 
+    def test_title_aka(self):
+        # simple search does not work
+        # because of the movie returned by its primary name 'American Sniper'
+        self.results = imdb.find_by_title(title='Francotirador',
+                                          production_year=2014,
+                                          exact_title=True)
+        self.assertEquals(len(self.results), 0)  # no results
+
+        # extended search by aka
+        self.results = imdb.find_by_title(title='Francotirador',
+                                          production_year=2014,
+                                          aka_titles=['American Sniper'],
+                                          kind='movie',
+                                          exact_title=True)
+        self.assertEquals(len(self.results), 1)
+        self.assertEquals(self.results[0]['imdb_id'], u'tt2179136')
+
+    def test_episode1(self):
+        self.results = imdb.find_by_title(title='Episode (#2.49)',
+                                          production_year=1973,
+                                          episode_for='The New Price Is Right',
+                                          kind='tv episode',
+                                          aka_titles=['the price is right'])
+        self.assertEquals(len(self.results), 1)
+        self.assertEquals(self.results[0]['imdb_id'], u'tt1187172')
+        self.assertEquals(self.results[0]['kind'], u'TV episode')
+        self.assertEquals(self.results[0]['episode_title'], u'Episode (#2.49)')
+
     def test_company(self):
         self.results = imdb.find_company_by_name("MTS")
         self.assertEquals(len(self.results), 1)
