@@ -295,8 +295,8 @@ class Imdb(object):
         return title_results
 
     def find_person_by_name(self, name, exact_name=False, aka_names=None):
-        if aka_titles and isinstance(aka_titles, (str, unicode)):
-            aka_titles = [aka_titles]
+        if aka_names and isinstance(aka_names, (str, unicode)):
+            aka_names = [aka_names]
         html_unescaped = htmlparser.HTMLParser().unescape
         # lowercasing all aka_names to compare:
         aka_names = [html_unescaped(_tgu(t)).lower()
