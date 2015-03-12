@@ -32,7 +32,7 @@ USER_AGENTS = (
     'Mozilla/5.0 (iPhone; CPU iPhone OS 5_0_1 like Mac OS X) '
     'AppleWebKit/534.46 (KHTML, like Gecko) Mobile/9A406',
     'Mozilla/5.0 (iPhone; CPU iPhone OS 5_0_1 like Mac OS X) '
-    'AppleWebKit/534.46 (KHTML, like Gecko) Ver sion/5.1 Mobile/9A405 '
+    'AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9A405 '
     'Safari/7534.48.3',
     'Mozilla/5.0 (iPhone; CPU iPhone OS 5_0_1 like Mac OS X) '
     'AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9A405 '
@@ -294,13 +294,19 @@ class Imdb(object):
 
         return title_results
 
-    def find_person_by_name(self, name):
+    def find_person_by_name(self, name, exact_name=False, aka_names=None):
+        if aka_titles and isinstance(aka_titles, (str, unicode)):
+            aka_titles = [aka_titles]
         html_unescaped = htmlparser.HTMLParser().unescape
+        # lowercasing all aka_names to compare:
+        aka_names = [html_unescaped(_tgu(t)).lower()
+                     for t in (aka_names or [])]
         name = _tgu(name)
         default_find_by_name_params = {
             'json': '1',
             'nr': 1,
             'nm': 'on',
+            'ex': 1 if exact_name else 0,
             'q': html_unescaped(name)
         }
         query_params = urlencode(dict_to_str(default_find_by_name_params))
@@ -315,16 +321,33 @@ class Imdb(object):
             'name_substring'
         )
         name_results = []
+        desc_rex = re.compile(r'^([^,]+), (.+)', re.I)
 
         # Loop through all results and build a list with popular matches first
         for key in keys:
             if key in results:
                 for r in results[key]:
+                    pname = html_unescaped(r['name'])
+                    description = html_unescaped(r['description'])
+                    title = html_unescaped(r['title'])
+                    if name_exact:
+                        if pname.lower() not in \
+                                aka_names + [name.lower()]:
+                            continue
+                    role, movie = '', ''
+                    m = desc_rex.search(description)
+                    if m:
+                        role = m.group(1)
+                        movie = m.group(2)
                     name_match = {
-                        'name': html_unescaped(r['name']),
-                        'description': html_unescaped(r['description']),
+                        'name': pname,
+                        'description': description,
                         'imdb_id': r['id']
                     }
+                    if title:
+                        name_match['title'] = title,
+                    if role and movie:
+                        name_match['role'] = [role, movie]
                     name_results.append(name_match)
 
         return name_results
@@ -465,6 +488,8 @@ class Imdb(object):
                 return cached_resp
 
         r = requests.get(url, headers={'User-Agent': self.user_agent})
+        if not r.ok:
+            return []
         response = json.loads(htmlparser.HTMLParser().unescape(r.text))
 
         if self.caching_enabled:
