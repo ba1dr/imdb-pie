@@ -490,7 +490,11 @@ class Imdb(object):
         r = requests.get(url, headers={'User-Agent': self.user_agent})
         if not r.ok:
             return []
-        response = json.loads(htmlparser.HTMLParser().unescape(r.text))
+        try:
+            response = json.loads(htmlparser.HTMLParser().unescape(r.text))
+        except ValueError:  # error "Expecting ',' delimiter"
+            logger.error("! ValueError: returned data '%s'..." % (r.text[:100]))
+            return []
 
         if self.caching_enabled:
             self._cache_response(cached_item_path, response)
