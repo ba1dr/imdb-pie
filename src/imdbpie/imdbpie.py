@@ -330,7 +330,7 @@ class Imdb(object):
                     pname = html_unescaped(r['name'])
                     description = html_unescaped(r['description'])
                     title = html_unescaped(r['title'])
-                    if name_exact:
+                    if exact_name:
                         if pname.lower() not in \
                                 aka_names + [name.lower()]:
                             continue
