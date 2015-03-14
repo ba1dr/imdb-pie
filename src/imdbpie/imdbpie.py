@@ -19,7 +19,7 @@ except ImportError:
     import HTMLParser as htmlparser
 import requests
 
-from .utils import try_get_unicode as _tgu, dict_to_str
+from .utils import try_get_unicode as _tgu, dict_to_str, dict_unescape
 
 logger = logging.getLogger(__name__)
 
@@ -491,7 +491,9 @@ class Imdb(object):
         if not r.ok:
             return []
         try:
-            response = json.loads(htmlparser.HTMLParser().unescape(r.text))
+            # response = json.loads(htmlparser.HTMLParser().unescape(r.text))
+            response = r.json()
+            response = dict_unescape(response)
         except ValueError:  # error "Expecting ',' delimiter"
             logger.error("! ValueError: returned data '%s'..." % (r.text[:100]))
             return []
